@@ -1,0 +1,21 @@
+name: CI
+on:
+  push:
+    branches:
+    - main
+    paths:
+    - src/**
+    - pom.xml
+    - .github/workflows/*
+  pull_request:
+    branches:
+    - main
+    paths:
+    - src/**
+    - pom.xml
+    - .github/workflows/*
+jobs:
+  build-jvm-image:
+    uses: making/workflows/.github/workflows/build-docker-image-maven-jvm.yaml@main
+    with:
+      image_file: image.yaml
