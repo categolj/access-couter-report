@@ -1,4 +1,4 @@
-package org.example.hellospringbatch;
+package am.ik.blog;
 
 import java.time.OffsetDateTime;
 

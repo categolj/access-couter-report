@@ -1,4 +1,4 @@
-package org.example.hellospringbatch.lognroll;
+package am.ik.blog.lognroll;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

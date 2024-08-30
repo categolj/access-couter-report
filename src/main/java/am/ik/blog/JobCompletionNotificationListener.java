@@ -1,4 +1,4 @@
-package org.example.hellospringbatch;
+package am.ik.blog;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

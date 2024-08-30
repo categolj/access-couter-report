@@ -1,4 +1,4 @@
-package org.example.hellospringbatch;
+package am.ik.blog;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
@@ -13,14 +13,13 @@ import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import am.ik.blog.entry.Entry;
+import am.ik.blog.entry.FrontMatter;
+import am.ik.blog.github.Commit;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.example.hellospringbatch.entry.Entry;
-import org.example.hellospringbatch.entry.FrontMatter;
-import org.example.hellospringbatch.github.Commit;
-import org.example.hellospringbatch.github.Committer;
-import org.example.hellospringbatch.github.CreateContentRequest;
-import org.example.hellospringbatch.github.CreateContentRequestBuilder;
-import org.example.hellospringbatch.github.CreateContentRequestBuilders;
+import am.ik.blog.github.Committer;
+import am.ik.blog.github.CreateContentRequestBuilder;
+import am.ik.blog.github.CreateContentRequestBuilders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

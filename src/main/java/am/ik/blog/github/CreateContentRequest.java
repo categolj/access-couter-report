@@ -1,4 +1,4 @@
-package org.example.hellospringbatch.github;
+package am.ik.blog.github;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.jilt.Builder;

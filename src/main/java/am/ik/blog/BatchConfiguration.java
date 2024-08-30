@@ -1,11 +1,11 @@
-package org.example.hellospringbatch;
+package am.ik.blog;
 
 import java.time.LocalDate;
 
+import am.ik.blog.entry.EntryProps;
+import am.ik.blog.lognroll.LognrollProps;
 import com.fasterxml.jackson.databind.JsonNode;
-import org.example.hellospringbatch.entry.EntryProps;
-import org.example.hellospringbatch.github.GithubProps;
-import org.example.hellospringbatch.lognroll.LognrollProps;
+import am.ik.blog.github.GithubProps;
 import org.zalando.logbook.Logbook;
 import org.zalando.logbook.spring.LogbookClientHttpRequestInterceptor;
 

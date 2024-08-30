@@ -1,4 +1,4 @@
-package org.example.hellospringbatch.entry;
+package am.ik.blog.entry;
 
 public record FrontMatter(String title) {
 }

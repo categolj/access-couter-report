@@ -1,4 +1,4 @@
-package org.example.hellospringbatch.github;
+package am.ik.blog.github;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
