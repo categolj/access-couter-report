@@ -5,24 +5,26 @@ jobs:
   run-batch:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
-    - name: Set up JDK 21
-      uses: actions/setup-java@v4
-      with:
-        java-version: '21'
-        distribution: 'liberica'
-        cache: maven
-    - name: Build the jar file
-      run: ./mvnw -V --no-transfer-progress clean package -DskipTests
-    - name: Run the jar file
+    - name: Run the docker image
       run: |
-        if [ -n "${{ secrets.MANAGEMENT_OTLP_LOGGING_ENDPOINT }}" ]; then
-            export MANAGEMENT_OTLP_LOGGING_ENDPOINT="${{ secrets.MANAGEMENT_OTLP_LOGGING_ENDPOINT }}"
-        fi
-        if [ -n "${{ secrets.MANAGEMENT_OTLP_LOGGING_HEADERS_AUTHORIZATION }}" ]; then
-            export MANAGEMENT_OTLP_LOGGING_HEADERS_AUTHORIZATION="${{ secrets.MANAGEMENT_OTLP_LOGGING_HEADERS_AUTHORIZATION }}"
-        fi
-        export MANAGEMENT_OPENTELEMETRY_RESOURCEATTRIBUTES_GITHUB_REPOSITORY=${GITHUB_REPOSITORY}
-        export MANAGEMENT_OPENTELEMETRY_RESOURCEATTRIBUTES_GITHUB_SHA=${GITHUB_SHA}
-        export MANAGEMENT_OPENTELEMETRY_RESOURCEATTRIBUTES_GITHUB_RUN_NUMBER=${GITHUB_RUN_NUMBER}
-        java -jar target/*.jar
+        export TZ=Asia/Tokyo
+        days_to_subtract=$(( $(date +%u) - 1 ))
+        monday_date=$(date -d "$(date +%Y-%m-%d) -$days_to_subtract days" +%Y-%m-%d)
+        cat <<EOF > envfile
+        MANAGEMENT_OPENTELEMETRY_RESOURCEATTRIBUTES_GITHUB_REPOSITORY=${GITHUB_REPOSITORY}
+        MANAGEMENT_OPENTELEMETRY_RESOURCEATTRIBUTES_GITHUB_SHA=${GITHUB_SHA}
+        MANAGEMENT_OPENTELEMETRY_RESOURCEATTRIBUTES_GITHUB_RUN_NUMBER=${GITHUB_RUN_NUMBER}
+        GITHUB_ACCESSTOKEN=${{ secrets.GITHUB_TOKEN }}
+        LOGNROLL_APIURL=${{ secrets.LOGNROLL_APIURL }}
+        LOGNROLL_ACCESSTOKEN=${{ secrets.LOGNROLL_ACCESSTOKEN }}
+        ENTRY_APIURL=${{ secrets.ENTRY_APIURL }}
+        MANAGEMENT_OTLP_LOGGING_ENDPOINT=${{ secrets.LOGNROLL_APIURL }}/v1/logs
+        MANAGEMENT_OTLP_LOGGING_HEADERS_AUTHORIZATION=${{ secrets.LOGNROLL_ACCESSTOKEN }}
+        EOF
+        docker run --rm \
+          -e BPL_JAVA_NMT_ENABLED=false \
+          -e BPL_JVM_THREAD_COUNT=10 \
+          --env-file envfile \
+          --pull always \
+          ghcr.io/${{ github.repository }}:jvm \
+          reportStartDate=$monday_date,java.time.LocalDate
