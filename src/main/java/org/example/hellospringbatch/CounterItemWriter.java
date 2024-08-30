@@ -58,37 +58,26 @@ public class CounterItemWriter implements ItemWriter<CounterItem> {
 		Map<Integer, ? extends List<? extends CounterItem>> countersByEntryId = items.stream()
 			.collect(Collectors.groupingBy(CounterItem::entryId, TreeMap::new, toList()));
 		Set<Integer> entryIds = countersByEntryId.keySet();
-		Entries entries = new Entries(
-				StreamSupport
-					.<JsonNode>stream(
-							Objects
-								.requireNonNull(this.entryClient.post()
-									.uri("/graphql")
-									.contentType(MediaType.APPLICATION_JSON)
-									.body("""
-											{
-											    "query": "query getEntries($first: Int, $after: String, $tenantId: String, $entryIds: [ID]) { getEntries(first: $first, after: $after, tenantId: $tenantId, entryIds: $entryIds) { edges { node { entryId frontMatter { title } } } pageInfo { endCursor } } }",
-											    "variables": {
-											      "entryIds": %s
-											    }
-											  }
-											"""
-										.formatted(entryIds))
-									.retrieve()
-									.body(JsonNode.class))
-								.get("data")
-								.get("getEntries")
-								.get("edges")
-								.spliterator(),
-							false)
-					.map(node -> node.get("node"))
-					.map(node -> new Entry(node.get("entryId").asInt(),
-							new FrontMatter(node.get("frontMatter").get("title").asText())))
-					.toList());
-		Map<Integer, String> titleMap = Objects.requireNonNull(entries)
-			.content()
-			.stream()
-			.collect(Collectors.toMap(Entry::entryId, Entry::title));
+		List<Entry> entries = StreamSupport
+			.stream(Objects.requireNonNull(this.entryClient.post()
+				.uri("/graphql")
+				.contentType(MediaType.APPLICATION_JSON)
+				.body("""
+						{
+						    "query": "query getEntries($first: Int, $after: String, $tenantId: String, $entryIds: [ID]) { getEntries(first: $first, after: $after, tenantId: $tenantId, entryIds: $entryIds) { edges { node { entryId frontMatter { title } } } pageInfo { endCursor } } }",
+						    "variables": {
+						      "entryIds": %s
+						    }
+						  }
+						"""
+					.formatted(entryIds))
+				.retrieve()
+				.body(JsonNode.class)).get("data").get("getEntries").get("edges").spliterator(), false)
+			.map(node -> node.get("node"))
+			.map(node -> new Entry(node.get("entryId").asInt(),
+					new FrontMatter(node.get("frontMatter").get("title").asText())))
+			.toList();
+		Map<Integer, String> titleMap = entries.stream().collect(Collectors.toMap(Entry::entryId, Entry::title));
 		String countersByDateTimeCsv = "date,access\r\n" + countersByDateTime.entrySet()
 			.stream()
 			.map(entry -> "%s,%d".formatted(entry.getKey(), entry.getValue().size()))
