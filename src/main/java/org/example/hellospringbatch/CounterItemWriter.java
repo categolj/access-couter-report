@@ -90,14 +90,14 @@ public class CounterItemWriter implements ItemWriter<CounterItem> {
 			.map(entry -> "%s,%s,%d".formatted(entry.getKey(), titleMap.getOrDefault(entry.getKey(), "N/A"),
 					entry.getValue().size()))
 			.collect(Collectors.joining("\r\n"));
-		Committer committer = new Committer("making[bot]", "making[bot]@users.noreply.github.com");
+		Committer committer = new Committer("github-actions[bot]", "github-actions[bot]@users.noreply.github.com");
 		this.createOrUpdateContent("countersByDateTime.csv", countersByDateTimeCsv, fromTo, committer);
 		this.createOrUpdateContent("countersByEntryId.csv", countersByEntryIdCsv, fromTo, committer);
 	}
 
 	void createOrUpdateContent(String fileName, String content, Map<String, String> fromTo, Committer committer) {
 		CreateContentRequestBuilders.Optionals ccrBuilder = CreateContentRequestBuilder.createContentRequest()
-			.message("Create %s (%s_%s)".formatted(fileName, fromTo.get("from"), fromTo.get("to")))
+			.message("Update %s (%s_%s)".formatted(fileName, fromTo.get("from"), fromTo.get("to")))
 			.content(Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8)))
 			.committer(committer);
 		try {
