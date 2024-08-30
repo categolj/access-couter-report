@@ -1,0 +1,45 @@
+package org.example.hellospringbatch;
+
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import org.example.hellospringbatch.CounterItem.Lang;
+
+import org.springframework.batch.item.ItemProcessor;
+
+public class CounterItemProcessor implements ItemProcessor<JsonNode, CounterItem> {
+
+	static Pattern pattern = Pattern.compile("/entries/([0-9]+)");
+
+	@Override
+	public CounterItem process(JsonNode item) {
+		Instant observedTimestamp = Instant.parse(item.get("observedTimestamp").asText());
+		JsonNode refererNode = item.get("attributes").get("referer");
+		if (refererNode == null) {
+			return null;
+		}
+		String referer = refererNode.asText();
+		Matcher matcher = pattern.matcher(referer);
+		if (matcher.find()) {
+			String entryId = matcher.group(1);
+			OffsetDateTime offsetDateTime = observedTimestamp.atOffset(ZoneOffset.ofHours(9))
+				.withMinute(0)
+				.withSecond(0)
+				.withNano(0);
+			Lang lang = referer.endsWith("/en") ? Lang.EN : Lang.JA;
+			return CounterItemBuilder.counterItem()
+				.date(offsetDateTime)
+				.entryId(Integer.valueOf(entryId))
+				.lang(lang)
+				.build();
+		}
+		else {
+			return null;
+		}
+	}
+
+}
