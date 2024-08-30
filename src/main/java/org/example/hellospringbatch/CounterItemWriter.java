@@ -14,18 +14,20 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.example.hellospringbatch.entry.Entries;
 import org.example.hellospringbatch.entry.Entry;
 import org.example.hellospringbatch.entry.FrontMatter;
+import org.example.hellospringbatch.github.Commit;
 import org.example.hellospringbatch.github.Committer;
 import org.example.hellospringbatch.github.CreateContentRequest;
 import org.example.hellospringbatch.github.CreateContentRequestBuilder;
+import org.example.hellospringbatch.github.CreateContentRequestBuilders;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.http.MediaType;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 
 import static java.util.stream.Collectors.toList;
@@ -88,25 +90,29 @@ public class CounterItemWriter implements ItemWriter<CounterItem> {
 			.map(entry -> "%s,%s,%d".formatted(entry.getKey(), titleMap.getOrDefault(entry.getKey(), "N/A"),
 					entry.getValue().size()))
 			.collect(Collectors.joining("\r\n"));
-		Committer committer = new Committer("making-bot[bot]", "makingx+bot[bot]@users.noreply.github.com");
-		CreateContentRequest countersByDateTimeCcr = CreateContentRequestBuilder.createContentRequest()
-			.message("Create countersByDateTime (%s_%s)".formatted(fromTo.get("from"), fromTo.get("to")))
-			.content(Base64.getEncoder().encodeToString(countersByDateTimeCsv.getBytes(StandardCharsets.UTF_8)))
-			.committer(committer)
-			.build();
-		CreateContentRequest countersByEntryIdCcr = CreateContentRequestBuilder.createContentRequest()
-			.message("Create countersByEntryId (%s_%s)".formatted(fromTo.get("from"), fromTo.get("to")))
-			.content(Base64.getEncoder().encodeToString(countersByEntryIdCsv.getBytes(StandardCharsets.UTF_8)))
-			.committer(committer)
-			.build();
+		Committer committer = new Committer("making[bot]", "making[bot]@users.noreply.github.com");
+		this.createOrUpdateContent("countersByDateTime.csv", countersByDateTimeCsv, fromTo, committer);
+		this.createOrUpdateContent("countersByEntryId.csv", countersByEntryIdCsv, fromTo, committer);
+	}
+
+	void createOrUpdateContent(String fileName, String content, Map<String, String> fromTo, Committer committer) {
+		CreateContentRequestBuilders.Optionals ccrBuilder = CreateContentRequestBuilder.createContentRequest()
+			.message("Create %s (%s_%s)".formatted(fileName, fromTo.get("from"), fromTo.get("to")))
+			.content(Base64.getEncoder().encodeToString(content.getBytes(StandardCharsets.UTF_8)))
+			.committer(committer);
+		try {
+			Commit lastCommit = this.githubClient.get()
+				.uri("repos/categolj/access-report/contents/{from}_{to}/" + fileName, fromTo)
+				.retrieve()
+				.body(Commit.class);
+			ccrBuilder.sha(Objects.requireNonNull(lastCommit).sha());
+		}
+		catch (HttpClientErrorException.NotFound notFound) {
+			// ignore
+		}
 		this.githubClient.put()
-			.uri("repos/categolj/access-report/contents/{from}_{to}/countersByDateTime.csv", fromTo)
-			.body(countersByDateTimeCcr)
-			.retrieve()
-			.toBodilessEntity();
-		this.githubClient.put()
-			.uri("repos/categolj/access-report/contents/{from}_{to}/countersByEntryId.csv", fromTo)
-			.body(countersByEntryIdCcr)
+			.uri("repos/categolj/access-report/contents/{from}_{to}/" + fileName, fromTo)
+			.body(ccrBuilder.build())
 			.retrieve()
 			.toBodilessEntity();
 	}
